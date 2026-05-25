@@ -1,0 +1,88 @@
+name: vastlint VAST Validator
+description: Validate VAST XML files in CI using vastlint
+branding:
+  icon: check-circle
+  color: blue
+
+inputs:
+  path:
+    description: File, glob, or directory passed to `vastlint check`
+    required: false
+    default: tags/**/*.xml
+  version:
+    description: vastlint release tag (for example v0.18.0) or latest
+    required: false
+    default: latest
+  fail-on-warning:
+    description: Fail the action when warnings are present
+    required: false
+    default: "false"
+  format:
+    description: Optional output format (for example json)
+    required: false
+    default: ""
+  extra-args:
+    description: Additional args appended to `vastlint check` (space-separated)
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Install vastlint
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        case "$(uname -s)" in
+          Linux)  os="linux" ;;
+          Darwin) os="macos" ;;
+          *)
+            echo "Unsupported runner OS: $(uname -s)"
+            exit 1
+            ;;
+        esac
+
+        case "$(uname -m)" in
+          x86_64|amd64) arch="x86_64" ;;
+          arm64|aarch64) arch="aarch64" ;;
+          *)
+            echo "Unsupported runner architecture: $(uname -m)"
+            exit 1
+            ;;
+        esac
+
+        artifact="vastlint-${os}-${arch}.tar.gz"
+        if [[ "${{ inputs.version }}" == "latest" ]]; then
+          url="https://github.com/aleksUIX/vastlint/releases/latest/download/${artifact}"
+        else
+          url="https://github.com/aleksUIX/vastlint/releases/download/${{ inputs.version }}/${artifact}"
+        fi
+
+        mkdir -p "$RUNNER_TEMP/vastlint-bin"
+        curl -fsSL "$url" -o "$RUNNER_TEMP/vastlint.tar.gz"
+        tar -xzf "$RUNNER_TEMP/vastlint.tar.gz" -C "$RUNNER_TEMP/vastlint-bin"
+        chmod +x "$RUNNER_TEMP/vastlint-bin/vastlint"
+        echo "$RUNNER_TEMP/vastlint-bin" >> "$GITHUB_PATH"
+
+    - name: Run vastlint check
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        cmd=(vastlint check "${{ inputs.path }}" --no-color)
+
+        if [[ "${{ inputs.fail-on-warning }}" == "true" ]]; then
+          cmd+=(--fail-on-warning)
+        fi
+
+        if [[ -n "${{ inputs.format }}" ]]; then
+          cmd+=(--format "${{ inputs.format }}")
+        fi
+
+        if [[ -n "${{ inputs.extra-args }}" ]]; then
+          read -r -a extra <<< "${{ inputs.extra-args }}"
+          cmd+=("${extra[@]}")
+        fi
+
+        "${cmd[@]}"
