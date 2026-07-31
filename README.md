@@ -28,7 +28,7 @@ jobs:
 ## Inputs
 
 - `path` (default: `tags/**/*.xml`): File, glob, or directory to validate.
-- `version` (default: `latest`): `vastlint` release tag (for example `v0.18.0`) or `latest`.
+- `version` (default: `latest`): `vastlint` release tag (for example `v0.11.1`) or `latest`.
 - `fail-on-warning` (default: `false`): Set to `true` to fail on warnings.
 - `format` (default: empty): Optional output format, for example `json`.
 - `extra-args` (default: empty): Extra arguments appended to `vastlint check`.
