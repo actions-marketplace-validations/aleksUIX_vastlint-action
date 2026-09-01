@@ -10,7 +10,7 @@ inputs:
     required: false
     default: tags/**/*.xml
   version:
-    description: vastlint release tag (for example v0.18.0) or latest
+    description: vastlint release tag (for example v0.11.1) or latest
     required: false
     default: latest
   fail-on-warning:
